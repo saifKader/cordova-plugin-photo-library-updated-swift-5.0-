@@ -1,3 +1,4 @@
+import Cordova
 import Photos
 import Foundation
 import AssetsLibrary // TODO: needed for deprecated functionality
@@ -208,13 +209,24 @@ final class PhotoLibraryService {
         let mediaType = mime_type.components(separatedBy: "/").first
 
 
-        fetchResult.enumerateObjects({
+        fetchResult.enumerateObjects(
+{
             (obj: AnyObject, idx: Int, stop: UnsafeMutablePointer<ObjCBool>) -> Void in
             let asset = obj as! PHAsset
 
             if(mediaType == "image") {
-                PHImageManager.default().requestImageData(for: asset, options: self.imageRequestOptions) {
-                    (imageData: Data?, dataUTI: String?, orientation: UIImageOrientation, info: [AnyHashable: Any]?) in
+                PHImageManager
+                    .default()
+                    .requestImageData(
+                        for: asset,
+                        options: self.imageRequestOptions
+                    ) {
+                        (
+                            imageData: Data?,
+                            dataUTI: String?,
+                            orientation: UIImage.Orientation,
+                            info: [AnyHashable: Any]?
+                        ) in
 
                     if(imageData == nil) {
                         completion(nil)
@@ -350,13 +362,21 @@ final class PhotoLibraryService {
             return
         }
 
-        fetchResult.enumerateObjects({
+        fetchResult.enumerateObjects(
+{
             (obj: AnyObject, idx: Int, stop: UnsafeMutablePointer<ObjCBool>) -> Void in
 
             let asset = obj as! PHAsset
 
-            PHImageManager.default().requestImageData(for: asset, options: self.imageRequestOptions) {
-                (imageData: Data?, dataUTI: String?, orientation: UIImageOrientation, info: [AnyHashable: Any]?) in
+    PHImageManager
+        .default()
+        .requestImageData(for: asset, options: self.imageRequestOptions) {
+            (
+                imageData: Data?,
+                dataUTI: String?,
+                orientation: UIImage.Orientation,
+                info: [AnyHashable: Any]?
+            ) in
 
                 guard let image = imageData != nil ? UIImage(data: imageData!) : nil else {
                     completion(nil)
@@ -380,15 +400,26 @@ final class PhotoLibraryService {
 
         // TODO: data should be returned as chunks, even for pics.
         // a massive data object might increase RAM usage too much, and iOS will then kill the app.
-        fetchResult.enumerateObjects({
+        fetchResult.enumerateObjects(
+{
             (obj: AnyObject, idx: Int, stop: UnsafeMutablePointer<ObjCBool>) -> Void in
             let asset = obj as! PHAsset
 
             let mediaType = mimeType.components(separatedBy: "/")[0]
 
             if(mediaType == "image") {
-                PHImageManager.default().requestImageData(for: asset, options: self.imageRequestOptions) {
-                    (imageData: Data?, dataUTI: String?, orientation: UIImageOrientation, info: [AnyHashable: Any]?) in
+                PHImageManager
+                    .default()
+                    .requestImageData(
+                        for: asset,
+                        options: self.imageRequestOptions
+                    ) {
+                        (
+                            imageData: Data?,
+                            dataUTI: String?,
+                            orientation: UIImage.Orientation,
+                            info: [AnyHashable: Any]?
+                        ) in
 
                     if(imageData == nil) {
                         completion(nil)
@@ -665,31 +696,35 @@ final class PhotoLibraryService {
 
     fileprivate func getDataFromURL(_ url: String) throws -> Data {
         if url.hasPrefix("data:") {
-
-            guard let match = self.dataURLPattern.firstMatch(in: url, options: NSRegularExpression.MatchingOptions(rawValue: 0), range: NSMakeRange(0, url.characters.count)) else { // TODO: firstMatchInString seems to be slow for unknown reason
+            
+            // Use url.count directly instead of url.characters.count
+            guard let match = self.dataURLPattern.firstMatch(in: url, options: NSRegularExpression.MatchingOptions(rawValue: 0), range: NSMakeRange(0, url.count)) else {
                 throw PhotoLibraryError.error(description: "The dataURL could not be parsed")
             }
+            
             let dataPos = match.range(at: 0).length
             let base64 = (url as NSString).substring(from: dataPos)
+            
             guard let decoded = Data(base64Encoded: base64, options: NSData.Base64DecodingOptions(rawValue: 0)) else {
                 throw PhotoLibraryError.error(description: "The dataURL could not be decoded")
             }
-
+            
             return decoded
-
+            
         } else {
-
+            
             guard let nsURL = URL(string: url) else {
                 throw PhotoLibraryError.error(description: "The url could not be decoded: \(url)")
             }
+            
             guard let fileContent = try? Data(contentsOf: nsURL) else {
                 throw PhotoLibraryError.error(description: "The url could not be read: \(url)")
             }
-
+            
             return fileContent
-
         }
     }
+
 
     fileprivate func putMediaToAlbum(_ assetsLibrary: ALAssetsLibrary, url: URL, album: String, completion: @escaping (_ error: String?)->Void) {
 
